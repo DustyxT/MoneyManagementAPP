@@ -108,35 +108,86 @@
         </div>
 
         <form action="/update_budget" method="POST">
-            <div
-                class="mb-8 bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark shadow-sm inline-block">
-                <label
-                    class="block text-xs font-semibold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider mb-3">Input
-                    Frequency</label>
-                <div class="flex items-center space-x-6">
-                    <label class="inline-flex items-center cursor-pointer group">
-                        <input {% if frequency=='Daily' %}checked{% endif %}
-                            class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
-                            name="frequency" value="Daily" type="radio"
-                            onchange="window.location.href='/budget?frequency=' + this.value" />
-                        <span class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Daily</span>
+            <!-- Target Selection and Frequency -->
+            <div class="flex flex-wrap gap-4 mb-8">
+                <!-- Scope & Target -->
+                <div
+                    class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
+                    <label
+                        class="block text-xs font-semibold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider mb-3">
+                        Budget Target
                     </label>
-                    <label class="inline-flex items-center cursor-pointer group">
-                        <input {% if frequency=='Weekly' %}checked{% endif %}
-                            class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
-                            name="frequency" value="Weekly" type="radio"
-                            onchange="window.location.href='/budget?frequency=' + this.value" />
-                        <span class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Weekly</span>
+                    <div class="flex flex-col gap-3">
+                        <select id="scope-select" name="scope" onchange="updateViewParams()"
+                            class="block w-full text-sm border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary dark:bg-slate-700 dark:text-white">
+                            <option value="Standard" {% if scope=='Standard' %}selected{% endif %}>Standard (Baseline)
+                            </option>
+                            <option value="Month" {% if scope=='Month' %}selected{% endif %}>Specific Month</option>
+                            <option value="Day" {% if scope=='Day' %}selected{% endif %}>Specific Day</option>
+                        </select>
+
+                        <!-- Date Picker (Hidden unless Month/Day selected) -->
+                        <div id="date-picker-container" class="{% if scope == 'Standard' %}hidden{% endif %}">
+                            <input type="date" id="target-date" name="target_date" value="{{ target_date }}"
+                                onchange="updateViewParams()"
+                                class="block w-full text-sm border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary dark:bg-slate-700 dark:text-white">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frequency -->
+                <div
+                    class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark shadow-sm flex-grow">
+                    <label
+                        class="block text-xs font-semibold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider mb-3">
+                        Input Frequency (View As)
                     </label>
-                    <label class="inline-flex items-center cursor-pointer group">
-                        <input {% if frequency=='Monthly' %}checked{% endif %}
-                            class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
-                            name="frequency" value="Monthly" type="radio"
-                            onchange="window.location.href='/budget?frequency=' + this.value" />
-                        <span class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Monthly</span>
-                    </label>
+                    <div class="flex items-center space-x-6 h-10">
+                        <label class="inline-flex items-center cursor-pointer group">
+                            <input {% if frequency=='Daily' %}checked{% endif %}
+                                class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
+                                name="frequency" value="Daily" type="radio" onchange="updateViewParams()" />
+                            <span
+                                class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Daily</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer group">
+                            <input {% if frequency=='Weekly' %}checked{% endif %}
+                                class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
+                                name="frequency" value="Weekly" type="radio" onchange="updateViewParams()" />
+                            <span
+                                class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Weekly</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer group">
+                            <input {% if frequency=='Monthly' %}checked{% endif %}
+                                class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
+                                name="frequency" value="Monthly" type="radio" onchange="updateViewParams()" />
+                            <span
+                                class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Monthly</span>
+                        </label>
+                    </div>
                 </div>
             </div>
+
+            <script>
+                function updateViewParams() {
+                    const scope = document.getElementById('scope-select').value;
+                    const date = document.getElementById('target-date').value;
+                    const freq = document.querySelector('input[name="frequency"]:checked').value;
+
+                    // Toggle date picker visibility immediately for better UX
+                    const dateContainer = document.getElementById('date-picker-container');
+                    if (scope === 'Standard') {
+                        dateContainer.classList.add('hidden');
+                    } else {
+                        dateContainer.classList.remove('hidden');
+                    }
+
+                    // Only reload if valid state
+                    if (scope !== 'Standard' && !date) return; // Wait for date input
+
+                    window.location.href = `/budget?frequency=${freq}&scope=${scope}&target_date=${date}`;
+                }
+            </script>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {% for group, items in grouped_budgets.items() %}

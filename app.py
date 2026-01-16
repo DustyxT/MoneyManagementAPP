@@ -83,17 +83,55 @@ def get_budget_vs_actual(start_date, end_date, days_ratio=1.0):
     conn = sqlite3.connect(DB_NAME)
     # Categories
     cats_df = pd.read_sql_query("SELECT name as category, group_type FROM categories", conn)
-    # Budgets (Default)
-    defs_df = pd.read_sql_query("SELECT category, amount as full_budget FROM budgets WHERE month = 'DEFAULT'", conn)
+    
+    # Check for Specific Day Budget (Highest Priority) - Only if start_date == end_date
+    day_str = str(start_date)
+    month_str = str(start_date)[:7] # YYYY-MM
+    
+    # Priority 1: Specific Day
+    specific_day_df = pd.read_sql_query("SELECT category, amount as day_budget FROM budgets WHERE month = ?", conn, params=(day_str,))
+    
+    # Priority 2: Specific Month
+    specific_month_df = pd.read_sql_query("SELECT category, amount as month_budget FROM budgets WHERE month = ?", conn, params=(month_str,))
+    
+    # Priority 3: Default
+    default_df = pd.read_sql_query("SELECT category, amount as default_budget FROM budgets WHERE month = 'DEFAULT'", conn)
+    
     # Actuals
     query = "SELECT category, SUM(amount) as actual FROM transactions WHERE date >= ? AND date <= ? GROUP BY category"
     actuals_df = pd.read_sql_query(query, conn, params=(str(start_date), str(end_date)))
     conn.close()
 
-    df = pd.merge(cats_df, defs_df, on='category', how='left').fillna(0.0)
-    df = pd.merge(df, actuals_df, on='category', how='left').fillna(0.0)
+    # Merge Logic
+    df = cats_df.copy()
     
-    df['budgeted'] = df['full_budget'] * days_ratio
+    # Merge all budget types
+    df = pd.merge(df, specific_day_df, on='category', how='left')
+    df = pd.merge(df, specific_month_df, on='category', how='left')
+    df = pd.merge(df, default_df, on='category', how='left')
+    
+    # Resolve 'budgeted'
+    def calculate_budget(row):
+        # 1. Exact Day Match (If viewing single day)
+        if pd.notnull(row.get('day_budget')) and start_date == end_date:
+             return row['day_budget']
+        
+        # 2. Specific Month Match
+        if pd.notnull(row.get('month_budget')):
+             # If viewing single day, divide by days in month (approx 30.44 or exact?)
+             # User requested "Set budget for a whole month".
+             # If days_ratio is set (e.g. 1/30.44), apply it.
+             return row['month_budget'] * days_ratio
+             
+        # 3. Default
+        if pd.notnull(row.get('default_budget')):
+             return row['default_budget'] * days_ratio
+             
+        return 0.0
+
+    df['budgeted'] = df.apply(calculate_budget, axis=1)
+    
+    df = pd.merge(df, actuals_df, on='category', how='left').fillna(0.0)
     
     # Calculate Diff
     df['diff'] = 0.0
@@ -354,47 +392,121 @@ def reports():
 def budget():
     conn = sqlite3.connect(DB_NAME)
     cats_df = pd.read_sql_query("SELECT name, group_type FROM categories", conn)
-    budgets_df = pd.read_sql_query("SELECT category, amount FROM budgets WHERE month='DEFAULT'", conn)
+    
+    # "frequency" here determines UI display multiplier
+    frequency = request.args.get('frequency', 'Monthly')
+    
+    # "target_date" determines WHICH budget row we are editing
+    # Format: 'YYYY-MM-DD' (Daily), 'YYYY-MM' (Monthly), or 'DEFAULT' (Standard)
+    # But usually user passes a date like '2026-01-16'. We need a separate 'scope' parameter.
+    # Let's simplify: 
+    # scope='Standard' (Default)
+    # scope='Month', target_date='2026-01'
+    # scope='Day', target_date='2026-01-16'
+    
+    scope = request.args.get('scope', 'Standard')
+    target_date = request.args.get('target_date', '')
+    
+    month_key = 'DEFAULT'
+    if scope == 'Month' and len(target_date) >= 7:
+        month_key = target_date[:7]
+    elif scope == 'Day' and len(target_date) >= 10:
+        month_key = target_date[:10]
+        
+    budgets_df = pd.read_sql_query("SELECT category, amount FROM budgets WHERE month=?", conn, params=(month_key,))
+    
+    # If specific budget not found, maybe PRE-FILL with standard? 
+    # For now, let's just return what exists (0.0 if empty). Pre-filling is a nice-to-have later.
+    
     conn.close()
     
     df = pd.merge(cats_df, budgets_df, left_on='name', right_on='category', how='left').fillna(0.0)
     
-    frequency = request.args.get('frequency', 'Monthly')
     ratio = 1.0
     if frequency == 'Daily': ratio = 1/30.44
     elif frequency == 'Weekly': ratio = 7/30.44
     
-    df['amount'] = df['amount'] * ratio
+    # If we are editing a SPECIFIC DAY budget, the 'amount' stored in DB should be interpreted as THAT DAY'S budget?
+    # NO. Our system unified on 'Monthly' equivalent storage in the beginning...
+    # BUT, if I say "Budget for Jan 16 is $50", I store $50. 
+    # If I store $50 as 'Monthly Equivalent' ($1500), then my logic in get_budget_vs_actual reads it as specific day budget...
+    # Wait, back in get_budget_vs_actual:
+    #   if pd.notnull(row.get('day_budget')): return row['day_budget']
+    # This implies 'day_budget' is the RAW amount for that day.
+    # SO: If scope='Day', ratio should be 1.0 (display raw).
+    # If scope='Month', ratio should be 1.0 (display raw monthly).
+    # If scope='Standard' and frequency='Daily', ratio = 1/30.44.
+    
+    # Adjust ratio logic:
+    if scope == 'Day':
+        # DB stores exactly what is budgeted for that day
+        # Display as is. Frequency selector likely shouldn't apply or should be locked to 'Daily'?
+        # Let's keep frequency for consistency but if scope is Day, usually we think in Daily terms.
+        # However, to avoid confusion, let's just apply frequency ratio ONLY if scope is Standard.
+        # OR:
+        # If I save a daily budget of $20, I expect to see $20.
+        pass
+    else:
+        # Apply standard conversion
+        df['amount'] = df['amount'] * ratio
     
     grouped_budgets = {}
     for grp in ['Income', 'Bill', 'Expense', 'Saving', 'Debt']:
         grouped_budgets[grp] = df[df['group_type'] == grp].sort_values('name').to_dict('records')
-        # Standardize keys for template
         for item in grouped_budgets[grp]:
             item['category'] = item['name']
 
-    return render_template('budget.html', frequency=frequency, grouped_budgets=grouped_budgets)
+    return render_template('budget.html', frequency=frequency, scope=scope, target_date=target_date, grouped_budgets=grouped_budgets)
 
 @app.route('/update_budget', methods=['POST'])
 def update_budget():
     frequency = request.form.get('frequency', 'Monthly')
+    scope = request.form.get('scope', 'Standard')
+    target_date = request.form.get('target_date', '')
+    
     ratio = 1.0
     if frequency == 'Daily': ratio = 1/30.44
     elif frequency == 'Weekly': ratio = 7/30.44
     
+    # Determine DB key
+    month_key = 'DEFAULT'
+    if scope == 'Month' and len(target_date) >= 7:
+        month_key = target_date[:7]
+    elif scope == 'Day' and len(target_date) >= 10:
+        month_key = target_date[:10]
+
     # Iterate inputs
     for key, value in request.form.items():
         if key.startswith('budget_'):
             cat_name = key.replace('budget_', '')
             try:
                 val = float(value)
-                # Save as Monthly
-                monthly_val = val / ratio
-                set_budget_db(cat_name, monthly_val)
+                
+                # Conversion Logic:
+                # If Scope is Standard: We convert everything to Monthly Equivalent.
+                # If Scope is Month: We store Monthly value. (So valid logic is same as Standard).
+                # If Scope is Day: We store DAILY value. (So we should NOT divide by ratio if input was daily... wait)
+                
+                db_val = val
+                
+                if scope == 'Day':
+                    # If I'm in Daily mode, input is Daily. DB expects Daily amount.
+                    # If I'm in Monthly mode (freq) but editing a Day? That's weird.
+                    # Assume Day Scope implies Daily Frequency input usually.
+                    # But if user selected 'Frequency=Monthly' while editing 'Day', they mean "This day's budget is $3000 (monthly rate equivalent)".
+                    # No, that's confusing. 
+                    # Let's simplify: If scope=Day, we ignore Ratio and assume input is the Value.
+                    db_val = val
+                else:
+                    # Scope Standard or Month: Store as Monthly.
+                    # If input was Daily ($10), and ratio is 1/30, we store $300. Correct.
+                    db_val = val / ratio
+                
+                set_budget_db(cat_name, db_val, month=month_key)
             except ValueError:
                 pass
                 
-    return redirect(url_for('budget', frequency=frequency))
+    return redirect(url_for('budget', frequency=frequency, scope=scope, target_date=target_date))
 
 @app.route('/logs')
 def logs():
