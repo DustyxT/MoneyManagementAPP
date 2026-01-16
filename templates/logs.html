@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Transaction History Logs - Student Money Manager</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#6366f1", // Indigo 500
+                        "background-light": "#f3f4f6", // Gray 100
+                        "background-dark": "#0f172a", // Slate 900
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e293b", // Slate 800
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#334155",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+        // Theme initialization in HEAD
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #475569;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-200">
+    <nav
+        class="sticky top-0 z-50 bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <span class="material-icons-round text-primary text-3xl">school</span>
+                        <h1 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Student Money Manager
+                        </h1>
+                    </div>
+                    <div class="hidden sm:ml-10 sm:flex sm:space-x-8">
+                        <a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/">Daily Manager</a>
+                        <a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/reports">Reports &amp; Metrics</a>
+                        <a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/budget">Budget Config</a>
+                        <a class="border-primary text-gray-900 dark:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/logs">Transaction Logs</a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <button
+                        class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                        id="theme-toggle">
+                        <span class="material-icons-round dark:hidden">dark_mode</span>
+                        <span class="material-icons-round hidden dark:block">light_mode</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-icons-round text-primary text-2xl">receipt_long</span>
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+                        Transaction History
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="bg-surface-light dark:bg-surface-dark shadow rounded-lg mb-6 border border-border-light dark:border-border-dark overflow-hidden">
+            <div class="p-4 sm:p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                    <form action="/logs" method="GET" class="w-full sm:w-auto">
+                        <label
+                            class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider"
+                            for="date-log">Select Date Log</label>
+                        <div class="relative rounded-md shadow-sm w-full sm:w-72">
+                            <input type="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()"
+                                class="block w-full pl-3 pr-10 py-2 border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white sm:text-sm focus:ring-primary focus:border-primary">
+                        </div>
+                    </form>
+                </div>
+                <div
+                    class="bg-gray-50 dark:bg-slate-700/50 px-4 py-3 border-t border-border-light dark:border-border-dark flex justify-between items-center">
+                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Viewing Log: <span class="font-bold text-gray-900 dark:text-white">{{ selected_date }}</span>
+                    </h3>
+                    <span
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        Total Flow: ${{ "{:,.2f}".format(total_flow_day) }}
+                    </span>
+                </div>
+            </div>
+            <div class="flex flex-col">
+                <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                        <div class="shadow overflow-hidden border-b border-gray-200 dark:border-gray-700 sm:rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-slate-700/50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16"
+                                            scope="col">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                            scope="col">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                            scope="col">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                            scope="col">Category</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                            scope="col">Amount ($)</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                            scope="col">Description</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                            scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody
+                                    class="bg-white dark:bg-surface-dark divide-y divide-gray-200 dark:divide-gray-700">
+                                    {% for tx in transactions %}
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors">
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            {{ tx.id }}</td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                                            {{ tx.date }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+{% if tx.type == 'Income' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+{% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300{% endif %}">{{ tx.type }}</span>
+                                        </td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                            {{ tx.category }}</td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right font-medium">
+                                            ${{ "{:,.2f}".format(tx.amount) }}</td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            {{ tx.description }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <form action="/delete_transaction/{{ tx.id }}?date={{ selected_date }}"
+                                                method="POST" onsubmit="return confirm('Delete transaction?');"
+                                                class="inline">
+                                                <button type="submit"
+                                                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                                    <span class="material-icons-round text-lg">delete</span>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        themeToggleBtn.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            if (htmlElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
+        });
+    </script>
+</body>
+
+</html>

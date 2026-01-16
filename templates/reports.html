@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Student Money Manager - Reports &amp; Metrics</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#6366f1", // Indigo 500
+                        "background-light": "#f3f4f6", // Gray 100
+                        "background-dark": "#0f172a", // Slate 900
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e293b", // Slate 800
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#334155",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+        // Theme init
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .donut-chart {
+            background: conic-gradient(#4ade80 0% {
+                        {
+                        income_pct
+                    }
+                }
+
+                %, #f87171 {
+                        {
+                        income_pct
+                    }
+                }
+
+                % {
+                        {
+                        income_pct + expense_pct
+                    }
+                }
+
+                %, #60a5fa {
+                        {
+                        income_pct + expense_pct
+                    }
+                }
+
+                % {
+                        {
+                        income_pct + expense_pct + saving_pct
+                    }
+                }
+
+                %, #c084fc {
+                        {
+                        income_pct + expense_pct + saving_pct
+                    }
+                }
+
+                % {
+                        {
+                        income_pct + expense_pct + saving_pct + debt_pct
+                    }
+                }
+
+                %, #fbbf24 {
+                        {
+                        income_pct + expense_pct + saving_pct + debt_pct
+                    }
+                }
+
+                % 100%);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-200">
+    <nav
+        class="sticky top-0 z-50 bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <span class="material-icons-round text-primary text-3xl">school</span>
+                        <h1 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Student Money Manager
+                        </h1>
+                    </div>
+                    <div class="hidden sm:ml-10 sm:flex sm:space-x-8">
+                        <a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/">Daily Manager</a>
+                        <a class="border-primary text-gray-900 dark:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/reports">Reports &amp; Metrics</a>
+                        <a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/budget">Budget Config</a>
+                        <a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/logs">Transaction Logs</a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <button
+                        class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                        id="theme-toggle">
+                        <span class="material-icons-round dark:hidden">dark_mode</span>
+                        <span class="material-icons-round hidden dark:block">light_mode</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <!-- Content identical to before but with layout wrapper -->
+        <div class="space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-gradient-to-br from-pink-500 to-orange-400 rounded-lg shadow-lg"><span
+                            class="material-icons-round text-white">analytics</span></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Performance Reports</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Analyze your spending habits and financial
+                            health.</p>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
+                <form method="GET" action="/reports">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                        <div class="md:col-span-4"><label
+                                class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">View
+                                By</label>
+                            <div class="flex items-center space-x-6"><label
+                                    class="flex items-center cursor-pointer group"><input {% if view_by=='Monthly'
+                                        %}checked{% endif %}
+                                        class="form-radio h-4 w-4 text-primary border-slate-300 focus:ring-primary bg-transparent"
+                                        name="view_by" value="Monthly" type="radio"
+                                        onchange="this.form.submit()" /><span
+                                        class="ml-2 text-sm text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Monthly</span></label><label
+                                    class="flex items-center cursor-pointer group"><input {% if view_by=='Weekly'
+                                        %}checked{% endif %}
+                                        class="form-radio h-4 w-4 text-primary border-slate-300 focus:ring-primary bg-transparent"
+                                        name="view_by" value="Weekly" type="radio" onchange="this.form.submit()" /><span
+                                        class="ml-2 text-sm text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Weekly</span></label>
+                            </div>
+                        </div>
+                        <div class="md:col-span-4"><label
+                                class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+                                for="year">Year</label><select
+                                class="form-select block w-full pl-3 pr-10 py-2 text-base border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
+                                id="year" name="year" onchange="this.form.submit()">
+                                <option value="2026" {% if year==2026 %}selected{% endif %}>2026</option>
+                                <option value="2025" {% if year==2025 %}selected{% endif %}>2025</option>
+                            </select></div>
+                        <div class="md:col-span-4"><label
+                                class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+                                for="month">Month</label><select
+                                class="form-select block w-full pl-3 pr-10 py-2 text-base border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
+                                id="month" name="month" onchange="this.form.submit()">{% for m in ['Jan', 'Feb', 'Mar',
+                                'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] %}<option value="{{ m }}"
+                                    {% if month==m %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div>
+                    </div>
+                </form>
+            </div>
+            <div class="space-y-4">
+                <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200">Performance: {{ report_title }}
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div
+                        class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-icons-round text-6xl text-slate-400">account_balance_wallet</span>
+                        </div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <p
+                                    class="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                    Total Budget (Out) <span class="material-icons-round text-xs cursor-help"
+                                        title="Total allocated budget">help_outline</span></p>
+                                <p class="text-3xl font-bold text-slate-900 dark:text-white mt-1">${{
+                                    "{:,.0f}".format(total_budget_out) }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1"><span>{{
+                                    "{:.1f}".format(budget_used_pct) }}% of Budget Used</span><span>${{
+                                    "{:,.0f}".format(total_budget_out - total_spent) }} Remaining</span></div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                <div class="bg-indigo-500 h-2 rounded-full" style="width: {{ budget_used_pct }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Total Spent and charts same as before -->
+                    <div
+                        class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-icons-round text-6xl text-rose-400">shopping_bag</span></div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Spent</p>
+                                <p class="text-3xl font-bold text-slate-900 dark:text-white mt-1">${{
+                                    "{:,.0f}".format(total_spent) }}</p>
+                            </div>{% if remaining_budget >= 0 %}<span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"><span
+                                    class="material-icons-round text-xs mr-1">arrow_upward</span> +{{
+                                "{:,.0f}".format(remaining_budget) }} Remaining</span>{% else %}<span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200 dark:border-rose-800"><span
+                                    class="material-icons-round text-xs mr-1">arrow_downward</span> -{{
+                                "{:,.0f}".format(remaining_budget|abs) }} Over</span>{% endif %}
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                <span>Spending Pace</span><span>{{ spending_pace }}</span></div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                <div class="bg-rose-500 h-2 rounded-full" style="width: {{ budget_used_pct }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Detailed Breakdown -->
+                <div
+                    class="lg:col-span-2 bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Detailed Breakdown</h3><button
+                            class="text-xs text-primary hover:text-indigo-400 font-medium">View All</button>
+                    </div>
+                    <div class="space-y-5">
+                        {% for cat in top_expenses %}
+                        <div class="group">
+                            <div class="flex justify-between text-sm mb-1"><span
+                                    class="font-medium text-slate-700 dark:text-slate-300 w-32 truncate">{{ cat.name
+                                    }}</span><span class="text-slate-500 dark:text-slate-400 ml-auto">${{
+                                    "{:,.2f}".format(cat.amount) }}</span></div>
+                            <div
+                                class="relative w-full h-8 bg-slate-100 dark:bg-slate-700/50 rounded-md overflow-hidden flex items-center">
+                                <div class="absolute top-0 left-0 h-full bg-rose-300 dark:bg-rose-400 transition-all duration-1000 ease-out"
+                                    style="width: {{ cat.pct }}%"></div><span
+                                    class="relative z-10 ml-2 text-xs font-bold text-rose-900 dark:text-rose-950">{{
+                                    "{:.1f}".format(cat.amount) }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <div
+                            class="flex justify-between text-xs text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-700">
+                            <span>0</span><span>20%</span><span>40%</span><span>60%</span><span>80%</span><span>100%</span>
+                        </div>
+                        <div class="text-center text-xs text-slate-500 dark:text-slate-400 mt-1">Relative to Budget
+                        </div>
+                    </div>
+                </div>
+                <!-- Donut -->
+                <div
+                    class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Financial Composition</h3><span
+                            class="material-icons-round text-slate-400 text-sm">info</span>
+                    </div>
+                    <div class="flex-grow flex items-center justify-center relative my-8">
+                        <div
+                            class="w-64 h-64 rounded-full donut-chart relative flex items-center justify-center shadow-xl">
+                            <div
+                                class="w-32 h-32 rounded-full bg-surface-light dark:bg-surface-dark flex flex-col items-center justify-center shadow-inner">
+                                <span class="text-xs text-slate-500">Total Flow</span><span
+                                    class="text-xl font-bold text-slate-900 dark:text-white">${{
+                                    "{:,.0f}".format(total_flow) }}</span></div>
+                            <div class="absolute top-[40%] right-[10%] text-center">
+                                <div class="text-[10px] font-bold text-white drop-shadow-md">Income</div>
+                                <div class="text-[9px] text-white opacity-90 drop-shadow-md">{{
+                                    "{:.1f}".format(income_pct) }}%</div>
+                            </div>
+                            <div class="absolute top-[15%] right-[30%] text-center">
+                                <div class="text-[10px] font-bold text-slate-800 drop-shadow-md">Expense</div>
+                                <div class="text-[9px] text-slate-800 opacity-90 drop-shadow-md">{{
+                                    "{:.1f}".format(expense_pct) }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-4 text-xs">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-green-400"></span><span
+                                class="text-slate-600 dark:text-slate-300">Income</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-blue-400"></span><span
+                                class="text-slate-600 dark:text-slate-300">Saving</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-red-400"></span><span
+                                class="text-slate-600 dark:text-slate-300">Expense</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-purple-400"></span><span
+                                class="text-slate-600 dark:text-slate-300">Debt</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-amber-400"></span><span
+                                class="text-slate-600 dark:text-slate-300">Bill</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        themeToggleBtn.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            localStorage.theme = htmlElement.classList.contains('dark') ? 'dark' : 'light';
+        });
+    </script>
+</body>
+
+</html>

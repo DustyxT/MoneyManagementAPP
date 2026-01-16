@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Budget Configuration Settings</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#6366f1", // Indigo 500
+                        "background-light": "#f3f4f6", // Gray 100
+                        "background-dark": "#0f172a", // Slate 900 (matched)
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e293b", // Slate 800 (matched)
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#334155",
+                        "text-main-light": "#1f2937",
+                        "text-main-dark": "#f9fafb",
+                        "text-sub-light": "#6b7280",
+                        "text-sub-dark": "#9ca3af",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        "xl": "1rem",
+                    },
+                },
+            },
+        };
+
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-sans transition-colors duration-200 min-h-screen text-text-main-light dark:text-text-main-dark">
+    <nav
+        class="sticky top-0 z-50 bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <span class="material-icons-outlined text-3xl text-primary">school</span>
+                        <h1 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Student Money Manager
+                        </h1>
+                    </div>
+                    <div class="hidden sm:ml-10 sm:flex sm:space-x-8">
+                        <a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/">Daily Manager</a>
+                        <a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/reports">Reports &amp; Metrics</a>
+                        <a class="border-primary text-gray-900 dark:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/budget">Budget Config</a>
+                        <a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            href="/logs">Transaction Logs</a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <button
+                        class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                        onclick="toggleDarkMode()">
+                        <span class="material-icons-outlined dark:hidden">dark_mode</span>
+                        <span class="material-icons-outlined hidden dark:block">light_mode</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="material-icons-outlined text-primary text-2xl">tune</span>
+                <h2 class="text-2xl font-bold">Standard Budget Configuration</h2>
+            </div>
+            <p class="text-text-sub-light dark:text-text-sub-dark max-w-3xl">
+                Define your Standard Budgets here. These baseline values are used to auto-fill your daily dashboards and
+                calculate forecasts.
+            </p>
+        </div>
+        <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-8 rounded-r-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <span class="material-icons-outlined text-blue-500">lightbulb</span>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700 dark:text-blue-200">
+                        Tip: You can enter your budget in Daily, Weekly, or Monthly terms. The app will automatically
+                        convert and save it as your Standard Monthly Budget.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <form action="/update_budget" method="POST">
+            <div
+                class="mb-8 bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark shadow-sm inline-block">
+                <label
+                    class="block text-xs font-semibold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider mb-3">Input
+                    Frequency</label>
+                <div class="flex items-center space-x-6">
+                    <label class="inline-flex items-center cursor-pointer group">
+                        <input {% if frequency=='Daily' %}checked{% endif %}
+                            class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
+                            name="frequency" value="Daily" type="radio" onchange="this.form.submit()" />
+                        <span class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Daily</span>
+                    </label>
+                    <label class="inline-flex items-center cursor-pointer group">
+                        <input {% if frequency=='Weekly' %}checked{% endif %}
+                            class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
+                            name="frequency" value="Weekly" type="radio" onchange="this.form.submit()" />
+                        <span class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Weekly</span>
+                    </label>
+                    <label class="inline-flex items-center cursor-pointer group">
+                        <input {% if frequency=='Monthly' %}checked{% endif %}
+                            class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
+                            name="frequency" value="Monthly" type="radio" onchange="this.form.submit()" />
+                        <span class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Monthly</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {% for group, items in grouped_budgets.items() %}
+                <section
+                    class="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden h-fit">
+                    <div
+                        class="px-6 py-4 border-b border-border-light dark:border-border-dark flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="material-icons-outlined text-lg {% if group == 'Income' %}text-emerald-500{% elif group == 'Saving' %}text-rose-500{% elif group == 'Bill' %}text-gray-400{% else %}text-blue-400{% endif %}">
+                                {% if group == 'Income' %}monetization_on{% elif group == 'Saving' %}savings{% elif
+                                group == 'Bill' %}receipt_long{% else %}credit_card{% endif %}
+                            </span>
+                            <h3 class="font-semibold text-lg">{{ group }}</h3>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-[300px] overflow-y-auto custom-scrollbar">
+                        <table class="min-w-full divide-y divide-border-light dark:divide-border-dark">
+                            <thead class="bg-gray-50 dark:bg-gray-800/30 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
+                                        scope="col">Category</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider w-32 bg-gray-50 dark:bg-gray-800"
+                                        scope="col">Budget</th>
+                                </tr>
+                            </thead>
+                            <tbody
+                                class="divide-y divide-border-light dark:divide-border-dark bg-surface-light dark:bg-surface-dark">
+                                {% for item in items %}
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                    <td class="px-6 py-3 whitespace-nowrap text-sm font-medium">{{ item.category }}</td>
+                                    <td class="px-6 py-3 whitespace-nowrap text-sm text-right font-mono">
+                                        <div class="relative rounded-md shadow-sm">
+                                            <div
+                                                class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-xs">$</span>
+                                            </div>
+                                            <input name="budget_{{ item.category }}"
+                                                class="focus:ring-primary focus:border-primary block w-full pl-6 pr-2 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md py-1 text-right"
+                                                placeholder="0.00" type="text"
+                                                value="{{ '{:.2f}'.format(item.amount) }}" />
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                {% endfor %}
+            </div>
+
+            <div class="fixed bottom-6 right-6 z-20">
+                <button type="submit" name="save_action" value="save"
+                    class="flex items-center gap-2 bg-primary hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
+                    <span class="material-icons-outlined">save</span>
+                    Save Configuration
+                </button>
+            </div>
+        </form>
+
+    </main>
+    <footer
+        class="border-t border-border-light dark:border-border-dark mt-12 py-8 bg-surface-light dark:bg-surface-dark">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-text-sub-light dark:text-text-sub-dark">
+            <p>© 2026 Student Money Manager. All rights reserved.</p>
+        </div>
+    </footer>
+    <script>
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        }
+    </script>
+</body>
+
+</html>
