@@ -117,19 +117,22 @@
                     <label class="inline-flex items-center cursor-pointer group">
                         <input {% if frequency=='Daily' %}checked{% endif %}
                             class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
-                            name="frequency" value="Daily" type="radio" onchange="this.form.submit()" />
+                            name="frequency" value="Daily" type="radio"
+                            onchange="window.location.href='/budget?frequency=' + this.value" />
                         <span class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Daily</span>
                     </label>
                     <label class="inline-flex items-center cursor-pointer group">
                         <input {% if frequency=='Weekly' %}checked{% endif %}
                             class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
-                            name="frequency" value="Weekly" type="radio" onchange="this.form.submit()" />
+                            name="frequency" value="Weekly" type="radio"
+                            onchange="window.location.href='/budget?frequency=' + this.value" />
                         <span class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Weekly</span>
                     </label>
                     <label class="inline-flex items-center cursor-pointer group">
                         <input {% if frequency=='Monthly' %}checked{% endif %}
                             class="form-radio text-primary border-gray-300 dark:border-gray-600 focus:ring-primary h-4 w-4"
-                            name="frequency" value="Monthly" type="radio" onchange="this.form.submit()" />
+                            name="frequency" value="Monthly" type="radio"
+                            onchange="window.location.href='/budget?frequency=' + this.value" />
                         <span class="ml-2 text-sm font-medium group-hover:text-primary transition-colors">Monthly</span>
                     </label>
                 </div>
