@@ -148,8 +148,9 @@
                         </div>
                         <div class="mt-2">
                             <label class="block text-sm text-gray-700 dark:text-gray-300">Category</label>
-                            <select name="category" id="tx-category"
-                                class="w-full border rounded p-2 dark:bg-slate-700 dark:text-white"></select>
+                            <input type="text" name="category" id="tx-category" list="tx-categories"
+                                class="w-full border rounded p-2 dark:bg-slate-700 dark:text-white" required>
+                            <datalist id="tx-categories"></datalist>
                         </div>
                         <div class="mt-2">
                             <label class="block text-sm text-gray-700 dark:text-gray-300">Amount</label>
@@ -344,18 +345,31 @@
                                             class="px-6 py-4 whitespace-nowrap text-sm {% if item.diff >= 0 %}text-green-600 dark:text-green-400{% else %}text-red-500 dark:text-red-400{% endif %} text-right">
                                             {% if item.diff >= 0 %}+{% endif %}${{ "{:,.2f}".format(item.diff) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                            <div
-                                                class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-5 relative overflow-hidden">
-                                                <div class="bg-primary h-full rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-500 ease-out whitespace-nowrap"
-                                                    style="width: {{ item.usage }}%">
-                                                    {% if item.usage >= 20 %}{{ "{:.0f}".format(item.usage) }}%{% endif
-                                                    %}
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-5 relative overflow-hidden flex-grow">
+                                                    <div class="bg-primary h-full rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-500 ease-out whitespace-nowrap"
+                                                        style="width: {{ item.usage }}%">
+                                                        {% if item.usage >= 20 %}{{ "{:.0f}".format(item.usage) }}%{%
+                                                        endif %}
+                                                    </div>
+                                                    {% if item.usage < 20 %} <div
+                                                        class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300">
+                                                        {{ "{:.0f}".format(item.usage) }}%
                                                 </div>
-                                                {% if item.usage < 20 %} <div
-                                                    class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300">
-                                                    {{ "{:.0f}".format(item.usage) }}%
+                                                {% endif %}
                                             </div>
-                                            {% endif %}
+                                            <form action="{{ url_for('clear_daily_category') }}" method="POST"
+                                                onsubmit="return confirm('Clear ALL transactions for {{ item.category }} on this day?');"
+                                                class="inline">
+                                                <input type="hidden" name="date" value="{{ selected_date }}">
+                                                <input type="hidden" name="category" value="{{ item.category }}">
+                                                <button type="submit"
+                                                    class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                    title="Clear daily transactions for this category">
+                                                    <span class="material-icons-outlined text-lg">delete</span>
+                                                </button>
+                                            </form>
                         </div>
                         </td>
                         </tr>
@@ -368,6 +382,7 @@
             {% endfor %}
             </div>
 
+
             <!-- Save Button -->
             <div class="fixed bottom-6 right-6 z-20">
                 <button type="submit"
@@ -378,6 +393,7 @@
             </div>
         </form>
 
+        <!-- Daily Transactions List REMOVED -->
         <footer class="mt-12 text-center text-sm text-gray-500 dark:text-gray-400 pb-8">
             <p>© 2026 Student Money Manager. Managing finances one day at a time.</p>
         </footer>
@@ -400,15 +416,22 @@
 
         function updateCategories() {
             const groupSelect = document.getElementById('tx-group');
-            const catSelect = document.getElementById('tx-category');
+            const catInput = document.getElementById('tx-category');
+            const dataList = document.getElementById('tx-categories');
             const cats = categoriesByGroup[groupSelect.value] || [];
-            catSelect.innerHTML = '';
+
+            // Clear datalist
+            dataList.innerHTML = '';
+
+            // Populate datalist
             cats.forEach(cat => {
                 const option = document.createElement('option');
                 option.value = cat;
-                option.textContent = cat;
-                catSelect.appendChild(option);
+                dataList.appendChild(option);
             });
+
+            // Clear input
+            catInput.value = '';
         }
         updateCategories();
     </script>

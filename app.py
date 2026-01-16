@@ -147,6 +147,12 @@ def daily():
         subset = df[df['group_type'] == grp].sort_values('category')
         grouped_data[grp] = subset.to_dict('records')
 
+    # Fetch daily transactions for list view
+    conn = sqlite3.connect(DB_NAME)
+    tx_df = pd.read_sql_query("SELECT * FROM transactions WHERE date = ? ORDER BY id DESC", conn, params=(date_str,))
+    conn.close()
+    daily_transactions = tx_df.to_dict('records')
+
     return render_template('daily.html', 
                            selected_date=date_str,
                            pretty_date=pretty_date,
@@ -155,7 +161,8 @@ def daily():
                            total_saved=total_saved,
                            net_balance=net_balance,
                            expense_left=expense_left,
-                           grouped_data=grouped_data)
+                           grouped_data=grouped_data,
+                           daily_transactions=daily_transactions)
 
 @app.route('/update_daily_budget', methods=['POST'])
 def update_daily_budget():
@@ -223,6 +230,15 @@ def add_transaction_route():
     # Map group to Type (Income vs Expense)
     tx_type = 'Income' if group == 'Income' else 'Expense'
     
+    # Check if category exists, if not add it
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT id FROM categories WHERE name = ?", (category,))
+    if not c.fetchone():
+        c.execute("INSERT INTO categories (name, group_type) VALUES (?, ?)", (category, group))
+        conn.commit()
+    conn.close()
+    
     add_transaction_db(date_str, tx_type, category, amount, desc)
     
     return redirect(url_for('daily', date=date_str))
@@ -230,7 +246,26 @@ def add_transaction_route():
 @app.route('/delete_transaction/<int:id>', methods=['POST'])
 def delete_transaction(id):
     date_str = request.args.get('date', str(datetime.date.today()))
+    next_url = request.args.get('next')
     delete_transaction_db(id)
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for('logs', date=date_str))
+
+@app.route('/clear_daily_category', methods=['POST'])
+def clear_daily_category():
+    date_str = request.form.get('date')
+    category = request.form.get('category')
+    
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("DELETE FROM transactions WHERE date = ? AND category = ?", (date_str, category))
+    conn.commit()
+    conn.close()
+    
+    return redirect(url_for('daily', date=date_str))
+    if next_url:
+        return redirect(next_url)
     return redirect(url_for('logs', date=date_str))
 
 @app.route('/reports')
