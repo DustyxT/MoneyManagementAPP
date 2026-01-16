@@ -329,7 +329,16 @@
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right">
-                                            ${{ "{:,.2f}".format(item.actual) }}</td>
+                                            <div class="relative rounded-md shadow-sm max-w-[100px] ml-auto">
+                                                <div
+                                                    class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                                    <span class="text-gray-500 sm:text-xs">$</span>
+                                                </div>
+                                                <input name="actual_{{ item.category }}" type="number" step="0.01"
+                                                    value="{{ '{:.2f}'.format(item.actual) }}"
+                                                    class="focus:ring-primary focus:border-primary block w-full pl-5 pr-2 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-slate-800 rounded-md text-right py-1">
+                                            </div>
+                                        </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm {% if item.diff >= 0 %}text-green-600 dark:text-green-400{% else %}text-red-500 dark:text-red-400{% endif %} text-right">
                                             {% if item.diff >= 0 %}+{% endif %}${{ "{:,.2f}".format(item.diff) }}</td>

@@ -162,18 +162,54 @@ def update_daily_budget():
     date_str = request.form.get('date')
     ratio = 1/30.44
     
-    # Iterate inputs from daily view
+    conn = sqlite3.connect(DB_NAME)
+
+    # iterate inputs
     for key, value in request.form.items():
+        # Handle Budget Updates
         if key.startswith('budget_'):
             cat_name = key.replace('budget_', '')
             try:
                 val = float(value)
                 # Save as Monthly (Daily / (1/30.44) = Daily * 30.44)
                 monthly_val = val / ratio
+                # Use a separate simplified connection or function if needed, but here:
+                # We can't use set_budget_db because it opens its own connection.
+                # Inline the SQL for efficiency or re-open. Re-opening is safer for simplicity.
                 set_budget_db(cat_name, monthly_val)
             except ValueError:
                 pass
+        
+        # Handle Actual Updates (Reconciliation)
+        elif key.startswith('actual_'):
+            cat_name = key.replace('actual_', '')
+            try:
+                new_total = float(value)
                 
+                # Fetch current sum for this day/category
+                cur = conn.cursor()
+                cur.execute("SELECT SUM(amount) FROM transactions WHERE date = ? AND category = ?", (date_str, cat_name))
+                res = cur.fetchone()
+                current_total = res[0] if res[0] is not None else 0.0
+                
+                diff = new_total - current_total
+                
+                # If there's a meaningful difference, insert an adjustment transaction
+                if abs(diff) > 0.001:
+                    # Determine Type (Income vs Expense)
+                    cur.execute("SELECT group_type FROM categories WHERE name = ?", (cat_name,))
+                    grp_res = cur.fetchone()
+                    grp_type = grp_res[0] if grp_res else 'Expense'
+                    tx_type = 'Income' if grp_type == 'Income' else 'Expense'
+                    
+                    description = "Daily Manager Adjustment"
+                    cur.execute('INSERT INTO transactions (date, type, category, amount, description) VALUES (?, ?, ?, ?, ?)',
+                                (date_str, tx_type, cat_name, diff, description))
+                    conn.commit()
+            except ValueError:
+                pass
+
+    conn.close()         
     return redirect(url_for('daily', date=date_str))
 
 @app.route('/add_transaction', methods=['POST'])
